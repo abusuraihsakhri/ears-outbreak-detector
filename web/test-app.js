@@ -1,7 +1,7 @@
 "use strict";
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { parseCsv, parseIsoDay, detect, csvExport } = require("./app.js");
+const { parseCsv, parseIsoDay, detect, computeC3, csvExport } = require("./app.js");
 
 function sample(counts) {
   const start = Date.UTC(2026, 0, 1), day = 86400000;
@@ -38,8 +38,9 @@ test("C3 combines current and preceding two C2 values", () => {
 });
 
 test("positive C2 deviations are not cancelled by negative C2", () => {
-  const vals = [5, -10, 5];
-  assert.equal(vals.reduce((s,v) => s + Math.max(0,v - 1), 0), 8);
+  assert.equal(computeC3([5, -10, 5]), 8);
+  assert.equal(computeC3([2, 0.5, 1]), 1);
+  assert.equal(computeC3([null, 5, 5]), null);
 });
 
 test("calendar gaps are filled with zeros", () => {
