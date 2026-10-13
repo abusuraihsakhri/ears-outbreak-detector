@@ -211,6 +211,8 @@
     }
     return records.join("\n") + "\n";
   }
+  el("csv-text").addEventListener("input", () => { if (el("csv-text").value.trim()) el("file").value = ""; });
+  el("file").addEventListener("change", () => { if (el("file").files.length) el("csv-text").value = ""; });
   el("sample").addEventListener("click", () => {
     el("csv-text").value = example(); el("file").value = ""; setStatus("Sample data loaded.");
   });
@@ -221,6 +223,9 @@
       if (f && f.size > 2_000_000) throw new Error("CSV file exceeds the 2 MB limit.");
       const text = f ? await f.text() : el("csv-text").value;
       const parsed = parseCsv(text);
+      if (!el("gap").value.trim() || !el("threshold").value.trim() || !el("c3-threshold").value.trim()) {
+        throw new Error("Enter a gap and both alert thresholds.");
+      }
       rows = detect(parsed.series, {
         window: el("window").value, gap: el("gap").value,
         threshold: el("threshold").value, c3Threshold: el("c3-threshold").value,
