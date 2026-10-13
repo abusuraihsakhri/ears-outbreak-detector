@@ -107,10 +107,15 @@
     }));
     for (let t = 0; t < rows.length; t++) {
       if (t >= 2 && rows[t].C2 !== null && rows[t - 1].C2 !== null && rows[t - 2].C2 !== null)
-        rows[t].C3 = Math.max(0, rows[t].C2 - 1) + Math.max(0, rows[t - 1].C2 - 1) + Math.max(0, rows[t - 2].C2 - 1);
+        rows[t].C3 = computeC3([rows[t].C2, rows[t - 1].C2, rows[t - 2].C2]);
       for (const m of METHODS) rows[t]["alert_" + m] = rows[t][m] !== null && rows[t][m] > (m === "C3" ? c3Threshold : threshold);
     }
     return rows;
+  }
+
+  function computeC3(values) {
+    if (values.length !== 3 || values.some(value => value === null || !Number.isFinite(value))) return null;
+    return values.reduce((total, value) => total + Math.max(0, value - 1), 0);
   }
 
   function csvExport(rows) {
@@ -120,7 +125,7 @@
     ).join("\n") + "\n";
   }
 
-  const api = { parseCsv, parseIsoDay, detect, csvExport };
+  const api = { parseCsv, parseIsoDay, detect, computeC3, csvExport };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (!root.document) return;
 
