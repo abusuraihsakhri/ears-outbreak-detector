@@ -1,236 +1,156 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ears Outbreak Detector — Operations Console</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #090d16;
-            --card: #111827;
-            --border: #1f293d;
-            --accent: #3b82f6;
-            --accent-glow: rgba(59, 130, 246, 0.25);
-            --text: #f3f4f6;
-            --text-muted: #9ca3af;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --success: #10b981;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            padding: 2rem;
-            min-height: 100vh;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .header-title h1 { font-size: 1.6rem; font-weight: 700; color: #fff; }
-        .header-title p { color: var(--text-muted); font-size: 0.9rem; margin-top: 0.25rem; }
-        .badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            background: var(--accent-glow);
-            color: var(--accent);
-            border: 1px solid var(--accent);
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: 1fr 1.2fr;
-            gap: 1.5rem;
-        }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 1.5rem;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-        }
-        .card h2 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .form-group { margin-bottom: 1rem; }
-        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.4rem; }
-        input, select, textarea {
-            width: 100%;
-            padding: 0.65rem 0.9rem;
-            background: #0d1322;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            color: #fff;
-            font-family: inherit;
-            font-size: 0.9rem;
-        }
-        input:focus, textarea:focus { outline: none; border-color: var(--accent); }
-        .btn {
-            background: var(--accent);
-            color: #fff;
-            border: none;
-            padding: 0.7rem 1.4rem;
-            border-radius: 6px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.2s;
-            width: 100%;
-        }
-        .btn:hover { background: #2563eb; }
-        .terminal {
-            background: #060911;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.85rem;
-            color: #10b981;
-            height: 380px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-        }
-        .metrics-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-        .metric-box {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 1rem;
-            text-align: center;
-        }
-        .metric-val { font-size: 1.4rem; font-weight: 700; color: #fff; margin-top: 0.25rem; }
-        .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Analyze daily surveillance counts with EARS C1, C2, and C3 aberration detection entirely in your browser.">
+  <title>EARS Outbreak Detector — Daily surveillance analysis</title>
+  <style>
+    :root { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #e2e8f0; background: #080f1c; font-synthesis: none; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; }
+    .wrap { width: min(1180px, calc(100% - 2rem)); margin: auto; }
+    header { padding: 2.5rem 0 1.6rem; border-bottom: 1px solid #27364a; }
+    .eyebrow { font-size: .73rem; font-weight: 750; letter-spacing: .14em; text-transform: uppercase; color: #38bdf8; }
+    h1 { margin: .55rem 0 .4rem; font-size: clamp(1.8rem, 3vw, 2.6rem); letter-spacing: -.035em; }
+    h2 { font-size: 1.08rem; margin: 0 0 1rem; letter-spacing: -.01em; }
+    p { color: #b8c6d8; line-height: 1.6; }
+    .lede { max-width: 760px; margin: .25rem 0 0; }
+    main { padding: 1.6rem 0 3rem; }
+    .workspace { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(270px, .85fr); gap: 1.1rem; }
+    .panel { background: #111c2d; border: 1px solid #28384f; border-radius: 14px; padding: 1.35rem; min-width: 0; }
+    label { font-size: .85rem; color: #ccd9e8; font-weight: 600; display: block; margin: 0 0 .4rem; }
+    input, select, textarea { background: #0a1424; color: #f1f5f9; border: 1px solid #42536c; border-radius: 7px; font: inherit; font-size: .94rem; padding: .7rem .8rem; width: 100%; }
+    textarea { min-height: 157px; resize: vertical; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .8rem; }
+    :focus-visible { outline: 3px solid #7dd3fc; outline-offset: 2px; }
+    .field { margin-bottom: 1.1rem; }
+    .hint { font-size: .79rem; color: #9fb1c8; margin: .4rem 0 0; }
+    .options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .85rem; }
+    .check { margin-top: 1rem; display: flex; align-items: center; gap: .6rem; }
+    .check input { width: 1rem; height: 1rem; margin: 0; }
+    .check label { margin: 0; }
+    .buttons { display: flex; flex-wrap: wrap; gap: .7rem; margin-top: 1.15rem; }
+    button { border: 1px solid #4b637d; border-radius: 8px; background: #213249; color: #f8fafc; padding: .7rem 1rem; font: inherit; font-size: .88rem; font-weight: 700; cursor: pointer; }
+    button.primary { background: #0369a1; border-color: #0ea5e9; }
+    button:not(:disabled):hover { filter: brightness(1.16); }
+    button:disabled { opacity: .48; cursor: not-allowed; }
+    .note { border-left: 3px solid #38bdf8; padding: .05rem 0 .05rem .9rem; margin: 1rem 0 0; }
+    .note p { font-size: .84rem; margin: .3rem 0; }
+    #status { margin: 1.1rem 0 0; min-height: 1.4rem; font-size: .9rem; color: #93e7ca; }
+    #status.error { color: #ffacac; }
+    .section { margin-top: 1.1rem; }
+    .stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: .65rem; }
+    .stat { border: 1px solid #344861; border-radius: 10px; background: #142439; padding: 1rem; }
+    .stat span { display: block; color: #a8bdd4; font-size: .76rem; }
+    .stat strong { display: block; font-size: 1.65rem; margin-top: .15rem; font-variant-numeric: tabular-nums; }
+    .chart-shell { overflow: auto; background: #091627; border: 1px solid #28384f; border-radius: 8px; }
+    svg { display: block; width: 100%; min-width: 580px; height: auto; }
+    table { border-collapse: collapse; width: 100%; font-size: .87rem; }
+    th, td { padding: .75rem .65rem; border-bottom: 1px solid #34465b; text-align: left; }
+    th { color: #9fb8d5; font-size: .78rem; }
+    .table-shell { max-height: 420px; overflow: auto; }
+    .table-shell th { position: sticky; top: 0; background: #111c2d; }
+    footer { border-top: 1px solid #27364a; padding: 1.1rem 0 2.2rem; color: #9fb1c8; font-size: .82rem; line-height: 1.6; }
+    footer a { color: #7dd3fc; }
+    @media (max-width: 780px) {
+      .workspace { grid-template-columns: 1fr; }
+      .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .options { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 460px) { .options { grid-template-columns: 1fr; } .buttons button { width: 100%; } }
+  </style>
+  <script src="app.js" defer></script>
 </head>
 <body>
+<header>
+  <div class="wrap">
+    <div class="eyebrow">Public health · Syndromic surveillance</div>
+    <h1>EARS Outbreak Detector</h1>
+    <p class="lede">Explore unexpected increases in daily event counts using the C1, C2 and C3 Early Aberration Reporting System statistics. Analyze and export data locally in the browser.</p>
+  </div>
+</header>
+<main class="wrap">
+  <div class="workspace">
+    <section class="panel" aria-labelledby="data-heading">
+      <h2 id="data-heading">1. Load daily counts</h2>
+      <div class="field">
+        <label for="file">CSV file</label>
+        <input id="file" type="file" accept=".csv,text/csv">
+        <p class="hint">Use columns <code>date,count</code> with ISO dates (YYYY-MM-DD) and nonnegative integer counts. Maximum 2 MB.</p>
+      </div>
+      <div class="field">
+        <label for="csv-text">Or paste CSV data</label>
+        <textarea id="csv-text" spellcheck="false" placeholder="date,count&#10;2026-01-01,10&#10;2026-01-02,12"></textarea>
+      </div>
+      <button type="button" id="sample">Load example dataset</button>
+      <div class="note"><p>Missing calendar days between observations are treated as zero, consistent with the Python CLI. Confirm that this assumption is appropriate for your surveillance data.</p></div>
+    </section>
+    <section class="panel" aria-labelledby="options-heading">
+      <h2 id="options-heading">2. Configure analysis</h2>
+      <div class="options">
+        <div class="field">
+          <label for="window">Baseline days</label>
+          <select id="window"><option value="7">7</option><option value="14">14</option><option value="28">28</option></select>
+        </div>
+        <div class="field">
+          <label for="gap">C2 gap (days)</label>
+          <input id="gap" type="number" min="0" max="365" step="1" value="2">
+        </div>
+        <div class="field">
+          <label for="threshold">Alert threshold</label>
+          <input id="threshold" type="number" min="0" max="99" step="0.1" value="3">
+        </div>
+      </div>
+      <div class="check">
+        <input id="dow" type="checkbox">
+        <label for="dow">Match day of week in baseline</label>
+      </div>
+      <p class="hint">Weekday filtering requires at least two matching observations. With a 7-day baseline, this option will not produce scores.</p>
+      <div class="note">
+        <p><strong>C1:</strong> prior baseline window; no gap.</p>
+        <p><strong>C2:</strong> prior baseline window, separated by the selected gap.</p>
+        <p><strong>C3:</strong> max(0, C2(t) + C2(t−1) + C2(t−2) − 3).</p>
+        <p>Scores use sample standard deviation. Flat baselines with an increased count receive a finite score of 100. An alert is a <em>statistical aberration</em>, not proof of an outbreak.</p>
+      </div>
+      <div class="buttons"><button type="button" class="primary" id="run">Run detection</button></div>
+      <p id="status" role="status" aria-live="polite">Ready. Upload a CSV or load the example dataset.</p>
+    </section>
+  </div>
 
-    <div class="header">
-        <div class="header-title">
-            <h1>Ears Outbreak Detector</h1>
-            <p>Domain: Clinical & Cryptographic AI | Standard: CAP / CLSI / NIST Standards | LabMind-Atlas Architecture</p>
-        </div>
-        <div>
-            <span class="badge">Air-Gapped Active</span>
-            <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border-color: #10b981;">Zero-PHI Guard Active</span>
-        </div>
-    </div>
-
-    <div class="metrics-bar">
-        <div class="metric-box">
-            <div class="metric-label">System Status</div>
-            <div class="metric-val" style="color: var(--success);" id="m-status">OPTIMAL</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Tasks Processed</div>
-            <div class="metric-val" id="m-tasks">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">Audit Blocks Signed</div>
-            <div class="metric-val" id="m-audit">142</div>
-        </div>
-        <div class="metric-box">
-            <div class="metric-label">PHI Interceptions</div>
-            <div class="metric-val" style="color: var(--accent);" id="m-phi">0</div>
-        </div>
-    </div>
-
-    <div class="grid">
-        <div class="card">
-            <h2>⚙️ Dispatch Distributed Component Audit</h2>
-            <div class="form-group">
-                <label>Task / Sample ID</label>
-                <input type="text" id="task_id" value="TASK-2026-LIVE-01">
-            </div>
-            <div class="form-group">
-                <label>Target Identifier</label>
-                <input type="text" id="target_id" value="SPECIMEN-ALPHA-77">
-            </div>
-            <div class="form-group">
-                <label>Primary Measurement / Value</label>
-                <input type="number" id="primary_metric" value="29.4" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Secondary Metric / Kinetic Index</label>
-                <input type="number" id="secondary_metric" value="14.8" step="0.1">
-            </div>
-            <div class="form-group">
-                <label>Status / Phenotype Descriptor</label>
-                <input type="text" id="status_descriptor" value="DISCORDANT_ANOMALY">
-            </div>
-            <div class="form-group">
-                <label><input type="checkbox" id="is_critical" checked> Trigger Emergency / Critical Flag</label>
-            </div>
-            <button class="btn" onclick="runAudit()">Execute Distributed Component Audit</button>
-        </div>
-
-        <div class="card">
-            <h2>📊 Real-Time Consensus Dossier & Audit Log</h2>
-            <div class="terminal" id="outputConsole">// Ears Outbreak Detector Operations Console Ready
-// Connection established with Air-Gapped Supervisor
-// Cryptographic HMAC-SHA256 audit ledger loaded.
-// Ready for live task payload dispatch...</div>
-        </div>
-    </div>
-
-    <script>
-        async function runAudit() {
-            const consoleEl = document.getElementById('outputConsole');
-            consoleEl.innerText = "// Dispatching task across specialized workers...
-// Invoking InvariantQCWorker, SafetyEscalationWorker, ProtocolWorker...";
-
-            const payload = {
-                task_id: document.getElementById('task_id').value,
-                target_identifier: document.getElementById('target_id').value,
-                primary_metric: parseFloat(document.getElementById('primary_metric').value),
-                secondary_metric: parseFloat(document.getElementById('secondary_metric').value),
-                status_descriptor: document.getElementById('status_descriptor').value,
-                is_critical_flag: document.getElementById('is_critical').checked
-            };
-
-            try {
-                const res = await fetch('/api/audit', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await res.json();
-                consoleEl.innerText = JSON.stringify(data, null, 2);
-                document.getElementById('m-tasks').innerText = parseInt(document.getElementById('m-tasks').innerText) + 1;
-                document.getElementById('m-audit').innerText = parseInt(document.getElementById('m-audit').innerText) + 1;
-            } catch (err) {
-                consoleEl.innerText = "// Offline / Simulation Output:\n" + JSON.stringify({
-                    dossier_id: "DOSSIER-SIM-" + Math.floor(Math.random()*10000),
-                    system: "ears-outbreak-detector",
-                    domain: "Clinical & Cryptographic AI",
-                    task_id: payload.task_id,
-                    overall_urgency: payload.is_critical_flag ? "CRITICAL_STAT_PANIC" : "ELEVATED_RISK",
-                    integrity_status: "DISCORDANT_ANOMALY",
-                    alerts: [
-                        { worker: "InvariantQCWorker", alert: "Primary metric exceeds upper reference bound" },
-                        { worker: "SafetyEscalationWorker", alert: "Critical emergency interlock flag active" }
-                    ],
-                    audit_hash: "HMAC_SHA256_e83f9a72b941d6c381f9"
-                }, null, 2);
-            }
-        }
-    </script>
+  <div id="results" hidden>
+    <section class="section" aria-label="Analysis summary">
+      <div class="stats">
+        <div class="stat"><span>Days analyzed</span><strong id="n-days">0</strong></div>
+        <div class="stat"><span>Missing filled</span><strong id="n-missing">0</strong></div>
+        <div class="stat"><span>C1 alerts</span><strong id="n-C1">0</strong></div>
+        <div class="stat"><span>C2 alerts</span><strong id="n-C2">0</strong></div>
+        <div class="stat"><span>C3 alerts</span><strong id="n-C3">0</strong></div>
+      </div>
+    </section>
+    <section class="panel section" aria-labelledby="chart-heading">
+      <h2 id="chart-heading">Daily count trajectory</h2>
+      <div class="chart-shell"><svg id="chart" role="img" aria-labelledby="chart-heading chart-desc" viewBox="0 0 1000 240"></svg></div>
+      <p class="hint" id="chart-desc">Observed daily counts with alert days highlighted.</p>
+    </section>
+    <section class="panel section" aria-labelledby="alert-heading">
+      <h2 id="alert-heading">Alert days</h2>
+      <p class="hint" id="table-note"></p>
+      <div class="table-shell">
+        <table>
+          <thead><tr><th scope="col">Date</th><th scope="col">Count</th><th scope="col">C1</th><th scope="col">C2</th><th scope="col">C3</th></tr></thead>
+          <tbody id="alerts-body"></tbody>
+        </table>
+      </div>
+      <p id="no-alerts" hidden>No days crossed the selected threshold.</p>
+      <div class="buttons">
+        <button type="button" id="download-all" disabled>Download full results CSV</button>
+        <button type="button" id="download-alerts" disabled>Download alert days CSV</button>
+      </div>
+    </section>
+  </div>
+  <noscript><p>JavaScript is required for local statistical analysis. The command-line Python detector remains available from the repository.</p></noscript>
+</main>
+<footer><div class="wrap">Local processing only: no file upload, telemetry, account or browser storage. For research and surveillance review, not standalone clinical or public-health decision making. <a href="https://github.com/abusuraihsakhri/ears-outbreak-detector">Source repository</a>.</div></footer>
 </body>
 </html>
