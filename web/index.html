@@ -26,7 +26,7 @@
     :focus-visible { outline: 3px solid #7dd3fc; outline-offset: 2px; }
     .field { margin-bottom: 1.1rem; }
     .hint { font-size: .79rem; color: #9fb1c8; margin: .4rem 0 0; }
-    .options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .85rem; }
+    .options { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .85rem; }
     .check { margin-top: 1rem; display: flex; align-items: center; gap: .6rem; }
     .check input { width: 1rem; height: 1rem; margin: 0; }
     .check label { margin: 0; }
@@ -98,8 +98,12 @@
           <input id="gap" type="number" min="0" max="365" step="1" value="2">
         </div>
         <div class="field">
-          <label for="threshold">Alert threshold</label>
+          <label for="threshold">C1/C2 threshold</label>
           <input id="threshold" type="number" min="0" max="99" step="0.1" value="3">
+        </div>
+        <div class="field">
+          <label for="c3-threshold">C3 threshold</label>
+          <input id="c3-threshold" type="number" min="0" max="299" step="0.1" value="2">
         </div>
       </div>
       <div class="check">
@@ -110,7 +114,7 @@
       <div class="note">
         <p><strong>C1:</strong> prior baseline window; no gap.</p>
         <p><strong>C2:</strong> prior baseline window, separated by the selected gap.</p>
-        <p><strong>C3:</strong> max(0, C2(t) + C2(t−1) + C2(t−2) − 3).</p>
+        <p><strong>C3:</strong> sum of max(0, C2(t−i) − 1) for i = 0, 1, 2.</p>
         <p>Scores use sample standard deviation. Flat baselines with an increased count receive a finite score of 100. An alert is a <em>statistical aberration</em>, not proof of an outbreak.</p>
       </div>
       <div class="buttons"><button type="button" class="primary" id="run">Run detection</button></div>
