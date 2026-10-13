@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   ears-outbreak-detector:
     build: .
@@ -7,7 +5,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - AUDIT_SECRET_KEY=${AUDIT_SECRET_KEY:-change-me-in-production}
+      - AUDIT_SECRET_KEY=${AUDIT_SECRET_KEY:?Set AUDIT_SECRET_KEY for persistent audit signing}
       - MODEL_PROVIDER=mock
     restart: unless-stopped
     healthcheck:
