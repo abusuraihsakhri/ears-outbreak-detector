@@ -34,7 +34,12 @@ test("C2 excludes the two guard-band days", () => {
 test("C3 combines current and preceding two C2 values", () => {
   const rows = detect(sample([10,10,10,10,10,10,10,10,10,20,20,20]), {window:7,gap:2,threshold:3});
   assert.equal(rows[9].C3, null);
-  assert.equal(rows[11].C3, Math.max(0, rows[9].C2 + rows[10].C2 + rows[11].C2 - 3));
+  assert.equal(rows[11].C3, [9,10,11].reduce((total,i) => total + Math.max(0, rows[i].C2 - 1), 0));
+});
+
+test("positive C2 deviations are not cancelled by negative C2", () => {
+  const vals = [5, -10, 5];
+  assert.equal(vals.reduce((s,v) => s + Math.max(0,v - 1), 0), 8);
 });
 
 test("calendar gaps are filled with zeros", () => {
