@@ -54,7 +54,15 @@ def load_daily_series(csv_path, date_col="date", count_col="count"):
             f"Found: {list(df.columns)}"
         )
 
-    df[date_col] = pd.to_datetime(df[date_col])
+    if df.empty:
+        raise ValueError("Input CSV must contain at least one observation.")
+    df[date_col] = pd.to_datetime(df[date_col], errors="raise")
+    if df[date_col].isna().any() or not (df[date_col] == df[date_col].dt.normalize()).all():
+        raise ValueError("Dates must be valid calendar dates without time components.")
+    df[count_col] = pd.to_numeric(df[count_col], errors="raise")
+    values = df[count_col].to_numpy(dtype=float)
+    if not np.isfinite(values).all() or (values < 0).any() or (values % 1 != 0).any():
+        raise ValueError("Counts must be finite, nonnegative whole numbers.")
     df = df[[date_col, count_col]].sort_values(date_col).reset_index(drop=True)
 
     if df[date_col].duplicated().any():
@@ -132,8 +140,25 @@ def compute_ears(df, window=7, gap=2, threshold=3.0, dow_adjust=False):
 
     df must have 'date' and 'count' columns (see load_daily_series).
     """
-    counts = df["count"].to_numpy(dtype=float)
-    weekday = df["date"].dt.weekday.to_numpy()
+    if not isinstance(window, int) or window < 2:
+        raise ValueError("window must be an integer of at least 2 days.")
+    if not isinstance(gap, int) or gap < 0:
+        raise ValueError("gap must be a nonnegative integer.")
+    if not np.isfinite(threshold) or not 0 <= threshold < CAP:
+        raise ValueError(f"threshold must be finite and within [0, {CAP}).")
+    if df.empty or not {"date", "count"}.issubset(df.columns):
+        raise ValueError("Input must contain at least one date and count.")
+    dates = pd.to_datetime(df["date"], errors="raise")
+    if dates.isna().any() or not (dates == dates.dt.normalize()).all():
+        raise ValueError("Dates must be valid calendar dates.")
+    if dates.duplicated().any() or not dates.is_monotonic_increasing or (
+        len(dates) > 1 and not (dates.diff().iloc[1:] == pd.Timedelta(days=1)).all()
+    ):
+        raise ValueError("Input must have unique, consecutive dates in ascending order.")
+    counts = pd.to_numeric(df["count"], errors="raise").to_numpy(dtype=float)
+    if not np.isfinite(counts).all() or (counts < 0).any() or (counts % 1 != 0).any():
+        raise ValueError("Counts must be finite, nonnegative whole numbers.")
+    weekday = dates.dt.weekday.to_numpy()
 
     c1 = _c_stat(counts, weekday, window=window, gap=0, dow_adjust=dow_adjust)
     c2 = _c_stat(counts, weekday, window=window, gap=gap, dow_adjust=dow_adjust)
