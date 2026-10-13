@@ -84,8 +84,8 @@ class TestC3Cusum(unittest.TestCase):
         c2 = np.array([1.0, 2.0, 0.5, np.nan, 4.0, 4.0, 4.0])
         c3 = ears.compute_c3(c2)
 
-        # index 2: max(0, 1.0+2.0+0.5-3) = 0.5
-        self.assertAlmostEqual(c3[2], 0.5, places=9)
+        # index 2: max(0, 1-1)+max(0, 2-1)+max(0, 0.5-1) = 1
+        self.assertAlmostEqual(c3[2], 1.0, places=9)
         # index 3 depends on a NaN input -> NaN
         self.assertTrue(np.isnan(c3[3]))
         # index 6: max(0, 4+4+4-3) = 9
@@ -93,6 +93,10 @@ class TestC3Cusum(unittest.TestCase):
         # indices 0,1 always NaN (not enough history for a 3-day sum)
         self.assertTrue(np.isnan(c3[0]))
         self.assertTrue(np.isnan(c3[1]))
+
+    def test_c3_negative_values_do_not_cancel_positive_deviations(self):
+        c3 = ears.compute_c3(np.array([5.0, -10.0, 5.0]))
+        self.assertAlmostEqual(c3[2], 8.0)
 
     def test_c3_accumulates_sustained_mild_elevation(self):
         # A sustained mild elevation that individually never trips C1/C2

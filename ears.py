@@ -14,14 +14,13 @@ C1: baseline is the trailing `window` days immediately before t (no gap).
 C2: baseline is the trailing `window` days before t, separated from t by a
     `gap`-day guard band (default 2 days), so recent case counts cannot
     leak into (and inflate) the current baseline.
-C3: a short cumulative-sum statistic that combines the current and two
-    prior C2 values, giving it more sensitivity to a sustained, gradual
-    increase than C1/C2 alone:
+C3: sum of positive deviations from 1 SD across the current and two
+    preceding C2 values:
 
-        C3(t) = max(0, C2(t) + C2(t-1) + C2(t-2) - 3)
+        C3(t) = sum(max(0, C2(t-i) - 1) for i in (0, 1, 2))
 
-An aberration is flagged when a C statistic exceeds a configurable
-threshold (typically 3).
+An aberration is flagged when C1/C2 exceeds 3, or C3 exceeds 2,
+by default. Each threshold can be configured.
 """
 
 import argparse
@@ -54,7 +53,15 @@ def load_daily_series(csv_path, date_col="date", count_col="count"):
             f"Found: {list(df.columns)}"
         )
 
-    df[date_col] = pd.to_datetime(df[date_col])
+    if df.empty:
+        raise ValueError("Input CSV must contain at least one observation.")
+    df[date_col] = pd.to_datetime(df[date_col], errors="raise")
+    if df[date_col].isna().any() or not (df[date_col] == df[date_col].dt.normalize()).all():
+        raise ValueError("Dates must be valid calendar dates without time components.")
+    df[count_col] = pd.to_numeric(df[count_col], errors="raise")
+    values = df[count_col].to_numpy(dtype=float)
+    if not np.isfinite(values).all() or (values < 0).any() or (values % 1 != 0).any():
+        raise ValueError("Counts must be finite, nonnegative whole numbers.")
     df = df[[date_col, count_col]].sort_values(date_col).reset_index(drop=True)
 
     if df[date_col].duplicated().any():
@@ -114,7 +121,7 @@ def _c_stat(counts, weekday, window, gap, dow_adjust):
 
 
 def compute_c3(c2):
-    """C3(t) = max(0, C2(t) + C2(t-1) + C2(t-2) - 3)."""
+    """C3(t) = sum(max(0, C2(t-i) - 1) for i in (0, 1, 2))."""
     n = len(c2)
     c3 = np.full(n, np.nan)
     for t in range(n):
@@ -123,17 +130,36 @@ def compute_c3(c2):
         window_vals = c2[t - 2 : t + 1]
         if np.any(np.isnan(window_vals)):
             continue
-        c3[t] = max(0.0, float(np.sum(window_vals)) - 3.0)
+        c3[t] = float(np.maximum(0.0, window_vals - 1.0).sum())
     return c3
 
 
-def compute_ears(df, window=7, gap=2, threshold=3.0, dow_adjust=False):
+def compute_ears(df, window=7, gap=2, threshold=3.0, dow_adjust=False, c3_threshold=2.0):
     """Compute C1, C2, C3 and alert flags for every day in `df`.
 
     df must have 'date' and 'count' columns (see load_daily_series).
     """
-    counts = df["count"].to_numpy(dtype=float)
-    weekday = df["date"].dt.weekday.to_numpy()
+    if not isinstance(window, int) or window < 2:
+        raise ValueError("window must be an integer of at least 2 days.")
+    if not isinstance(gap, int) or gap < 0:
+        raise ValueError("gap must be a nonnegative integer.")
+    if not np.isfinite(threshold) or not 0 <= threshold < CAP:
+        raise ValueError(f"threshold must be finite and within [0, {CAP}).")
+    if not np.isfinite(c3_threshold) or not 0 <= c3_threshold < CAP * 3:
+        raise ValueError("c3_threshold must be finite and nonnegative.")
+    if df.empty or not {"date", "count"}.issubset(df.columns):
+        raise ValueError("Input must contain at least one date and count.")
+    dates = pd.to_datetime(df["date"], errors="raise")
+    if dates.isna().any() or not (dates == dates.dt.normalize()).all():
+        raise ValueError("Dates must be valid calendar dates.")
+    if dates.duplicated().any() or not dates.is_monotonic_increasing or (
+        len(dates) > 1 and not (dates.diff().iloc[1:] == pd.Timedelta(days=1)).all()
+    ):
+        raise ValueError("Input must have unique, consecutive dates in ascending order.")
+    counts = pd.to_numeric(df["count"], errors="raise").to_numpy(dtype=float)
+    if not np.isfinite(counts).all() or (counts < 0).any() or (counts % 1 != 0).any():
+        raise ValueError("Counts must be finite, nonnegative whole numbers.")
+    weekday = dates.dt.weekday.to_numpy()
 
     c1 = _c_stat(counts, weekday, window=window, gap=0, dow_adjust=dow_adjust)
     c2 = _c_stat(counts, weekday, window=window, gap=gap, dow_adjust=dow_adjust)
@@ -142,7 +168,7 @@ def compute_ears(df, window=7, gap=2, threshold=3.0, dow_adjust=False):
     out = df.copy()
     out["C1"], out["C2"], out["C3"] = c1, c2, c3
     for m in METHODS:
-        out[f"alert_{m}"] = out[m] > threshold
+        out[f"alert_{m}"] = out[m] > (c3_threshold if m == "C3" else threshold)
     return out
 
 
@@ -230,7 +256,8 @@ def _add_common_args(p):
         "--gap", type=int, default=2,
         help="Guard-band gap in days before the test day for the C2/C3 baseline (default: 2). C1 always uses no gap.",
     )
-    p.add_argument("--threshold", type=float, default=3.0, help="Alert threshold for C > threshold (default: 3.0).")
+    p.add_argument("--threshold", type=float, default=3.0, help="C1/C2 alert threshold (default: 3.0).")
+    p.add_argument("--c3-threshold", type=float, default=2.0, help="C3 alert threshold (default: 2.0).")
     p.add_argument(
         "--dow-adjust", action="store_true",
         help="Restrict the baseline to days sharing the test day's weekday, to control for weekly reporting patterns.",
@@ -265,7 +292,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     df = load_daily_series(args.input, args.date_col, args.count_col)
-    result = compute_ears(df, window=args.window, gap=args.gap, threshold=args.threshold, dow_adjust=args.dow_adjust)
+    result = compute_ears(df, window=args.window, gap=args.gap, threshold=args.threshold, dow_adjust=args.dow_adjust, c3_threshold=args.c3_threshold)
 
     if args.command == "scan":
         report = scan_report(result, method=args.method)
