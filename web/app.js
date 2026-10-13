@@ -73,10 +73,12 @@
 
   function detect(series, options) {
     const window = Number(options.window), gap = Number(options.gap), threshold = Number(options.threshold);
+    const c3Threshold = options.c3Threshold === undefined ? 2 : Number(options.c3Threshold);
     const dowAdjust = Boolean(options.dowAdjust);
     if (!Number.isInteger(window) || window < 2 || !Number.isInteger(gap) || gap < 0
-        || !Number.isFinite(threshold) || threshold < 0 || threshold >= CAP) {
-      throw new Error("Use a baseline window of at least 2, a nonnegative integer gap, and a threshold from 0 to below 100.");
+        || !Number.isFinite(threshold) || threshold < 0 || threshold >= CAP
+        || !Number.isFinite(c3Threshold) || c3Threshold < 0 || c3Threshold >= CAP * 3) {
+      throw new Error("Use a baseline window of at least 2, a nonnegative integer gap, a C1/C2 threshold below 100 and a C3 threshold below 300.");
     }
     if (!Array.isArray(series) || !series.length) throw new Error("No surveillance records.");
     for (let i = 0; i < series.length; i++) {
@@ -105,8 +107,8 @@
     }));
     for (let t = 0; t < rows.length; t++) {
       if (t >= 2 && rows[t].C2 !== null && rows[t - 1].C2 !== null && rows[t - 2].C2 !== null)
-        rows[t].C3 = Math.max(0, rows[t].C2 + rows[t - 1].C2 + rows[t - 2].C2 - 3);
-      for (const m of METHODS) rows[t]["alert_" + m] = rows[t][m] !== null && rows[t][m] > threshold;
+        rows[t].C3 = Math.max(0, rows[t].C2 - 1) + Math.max(0, rows[t - 1].C2 - 1) + Math.max(0, rows[t - 2].C2 - 1);
+      for (const m of METHODS) rows[t]["alert_" + m] = rows[t][m] !== null && rows[t][m] > (m === "C3" ? c3Threshold : threshold);
     }
     return rows;
   }
@@ -216,7 +218,8 @@
       const parsed = parseCsv(text);
       rows = detect(parsed.series, {
         window: el("window").value, gap: el("gap").value,
-        threshold: el("threshold").value, dowAdjust: el("dow").checked
+        threshold: el("threshold").value, c3Threshold: el("c3-threshold").value,
+        dowAdjust: el("dow").checked
       });
       render(rows, parsed.missing);
       setStatus("Analysis completed locally. No records were uploaded.");
